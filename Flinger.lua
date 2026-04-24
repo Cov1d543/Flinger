@@ -1,39 +1,46 @@
--- Touch to Fling Script (Anti-Collision Bypass)
+-- FIXED Touch to Fling (Bypass)
 local plr = game.Players.LocalPlayer
 local char = plr.Character or plr.CharacterAdded:Wait()
 local root = char:WaitForChild("HumanoidRootPart")
+local hum = char:WaitForChild("Humanoid")
 
--- ميزة الـ NoClip (عشان تدخل جوه جسمه وتطيره)
-local function ToggleNoClip()
-    for _, part in pairs(char:GetChildren()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
-    end
+-- منع الشخصية من الوقوع أو الطيران عشوائياً (Anti-Self Fling)
+local function Stabilize()
+    local bg = Instance.new("BodyVelocity", root)
+    bg.Name = "Stabilizer"
+    bg.MaxForce = Vector3.new(0, math.huge, 0) -- بيثبتك على الأرض بس بيخليك تمشي عادي
+    bg.Velocity = Vector3.new(0, 0, 0)
 end
 
--- تفعيل الدوران المدمر
-local function ActivateTouchFling()
-    local bg = Instance.new("BodyAngularVelocity", root)
-    bg.Name = "DestructionForce"
-    bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bg.P = math.huge
-    bg.AngularVelocity = Vector3.new(0, 999999, 0) -- سرعة دوران مرعبة
+-- الدوران المدمر (للعالم الخارجي فقط)
+local function StartFling()
+    local bavg = Instance.new("BodyAngularVelocity", root)
+    bavg.Name = "FlingForce"
+    bavg.MaxTorque = Vector3.new(0, math.huge, 0) -- الدوران أفقي فقط عشان متتشقلبش
+    bavg.P = math.huge
+    bavg.AngularVelocity = Vector3.new(0, 99999, 0) -- سرعة دوران عالية
     
-    -- جعل القوة تتركز في أي شيء تلمسه
-    char.Humanoid.Touched:Connect(function(hit)
-        if hit.Parent:FindFirstChild("Humanoid") and hit.Parent.Name ~= plr.Name then
+    -- "لمسة الموت"
+    root.Touched:Connect(function(hit)
+        if hit.Parent and hit.Parent:FindFirstChild("Humanoid") and hit.Parent.Name ~= plr.Name then
             local targetRoot = hit.Parent:FindFirstChild("HumanoidRootPart")
             if targetRoot then
-                -- سر التقنية: دفع الخصم لبعيد جداً عند التلامس
-                targetRoot.Velocity = Vector3.new(0, 10000, 0) + (root.CFrame.LookVector * 10000)
-                print("Target Flung: " .. hit.Parent.Name)
+                -- بنضرب الخصم بقوة خرافية لفوق ولبعيد
+                targetRoot.Velocity = Vector3.new(0, 5000, 0) + (root.CFrame.LookVector * 5000)
             end
         end
     end)
 end
 
--- تشغيل الخصائص
-game:GetService("RunService").Stepped:Connect(ToggleNoClip) -- ن وكليب مستمر
-ActivateTouchFling()
-print("Touch to Fling is READY!")
+-- تفعيل الـ NoClip عشان متخبطش في الأرض وتطير نفسك
+game:GetService("RunService").Stepped:Connect(function()
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end)
+
+Stabilize()
+StartFling()
+print("Veloce Fling Fixed - Ready!")
