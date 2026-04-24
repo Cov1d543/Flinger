@@ -1,62 +1,39 @@
--- Fling Executor Script (Anti-Collision Bypass)
-local Library = {} -- ممكن نطورها لـ GUI كاملة لاحقاً
-
+-- Touch to Fling Script (Anti-Collision Bypass)
 local plr = game.Players.LocalPlayer
 local char = plr.Character or plr.CharacterAdded:Wait()
 local root = char:WaitForChild("HumanoidRootPart")
 
--- ميزة الـ Invisible Fling (عشان تطيرهم من غير ما يشوفوك)
-local function InvisibleFling()
-    local Trow = Instance.new("BodyAngularVelocity", root)
-    Trow.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    Trow.P = math.huge
-    Trow.AngularVelocity = Vector3.new(0, 999999, 0) -- سرعة دوران خرافية
+-- ميزة الـ NoClip (عشان تدخل جوه جسمه وتطيره)
+local function ToggleNoClip()
+    for _, part in pairs(char:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end
+
+-- تفعيل الدوران المدمر
+local function ActivateTouchFling()
+    local bg = Instance.new("BodyAngularVelocity", root)
+    bg.Name = "DestructionForce"
+    bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bg.P = math.huge
+    bg.AngularVelocity = Vector3.new(0, 999999, 0) -- سرعة دوران مرعبة
     
-    -- تخطي حماية منع التصادم عن طريق تغيير الـ Velocity باستمرار
-    spawn(function()
-        while Trow.Parent do
-            root.Velocity = Vector3.new(999, 999, 999)
-            task.wait(0.1)
-            root.Velocity = Vector3.new(0, 0, 0)
-            task.wait(0.1)
+    -- جعل القوة تتركز في أي شيء تلمسه
+    char.Humanoid.Touched:Connect(function(hit)
+        if hit.Parent:FindFirstChild("Humanoid") and hit.Parent.Name ~= plr.Name then
+            local targetRoot = hit.Parent:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                -- سر التقنية: دفع الخصم لبعيد جداً عند التلامس
+                targetRoot.Velocity = Vector3.new(0, 10000, 0) + (root.CFrame.LookVector * 10000)
+                print("Target Flung: " .. hit.Parent.Name)
+            end
         end
     end)
 end
 
--- إنشاء واجهة سريعة (GUI) تظهر للاكسكيوتر
-local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 200, 0, 100)
-Frame.Position = UDim2.new(0.5, -100, 0.5, -50)
-Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Frame.Active = true
-Frame.Draggable = true
-
-local Button = Instance.new("TextButton", Frame)
-Button.Size = UDim2.new(1, -20, 0, 40)
-Button.Position = UDim2.new(0, 10, 0, 10)
-Button.Text = "ACTIVATE FLING"
-Button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-Button.TextColor3 = Color3.new(1, 1, 1)
-
-local KillButton = Instance.new("TextButton", Frame)
-KillButton.Size = UDim2.new(1, -20, 0, 40)
-KillButton.Position = UDim2.new(0, 10, 0, 55)
-KillButton.Text = "FLY MODE"
-KillButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-KillButton.TextColor3 = Color3.new(1, 1, 1)
-
--- تفعيل الفلينج عند الضغط
-Button.MouseButton1Click:Connect(function()
-    InvisibleFling()
-    print("Fling Activated!")
-end)
-
--- ميزة الطيران (Fly) اللي طلبتها
-KillButton.MouseButton1Click:Connect(function()
-    local bv = Instance.new("BodyVelocity", root)
-    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    bv.Velocity = Vector3.new(0, 50, 0) -- هيطيرك لفوق
-    task.wait(2)
-    bv:Destroy()
-end)
+-- تشغيل الخصائص
+game:GetService("RunService").Stepped:Connect(ToggleNoClip) -- ن وكليب مستمر
+ActivateTouchFling()
+print("Touch to Fling is READY!")
